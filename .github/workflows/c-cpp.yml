@@ -19,6 +19,8 @@ jobs:
       run: cmake -S . -B build
     - name: Build
       run: cmake --build build
+    - name: Execute
+      run: ./build/portfolio_plusplus
     - name: Test
       run: ctest --test-dir build
     
