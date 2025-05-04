@@ -1,3 +1,5 @@
 /build
 /python/bin
 /python/lib
+/python/src/__pycache__
+/.vscode

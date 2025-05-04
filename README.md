@@ -11,3 +11,5 @@ source python/bin/activate
 (pip list to check active packages)
 
 yfinance: https://github.com/ranaroussi/yfinance
+
+pybind (as git submodule): https://pybind11.readthedocs.io/en/latest/installing.html
