@@ -6,9 +6,25 @@
 
 namespace py = pybind11;
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::cout << "Hello, world!" << std::endl;
+    char *ticker = nullptr;
+    char *period = nullptr;
+
+    // check if --ticker and --period CLI arg are used
+    if (argc > 1)
+    {
+        for (int i = 1; i < argc; i++)
+        {
+            if (strcmp(argv[i], (char *)"--ticker") == 0)
+                ticker = argv[i + 1];
+
+            if (strcmp(argv[i], (char *)"--period") == 0)
+                period = argv[i + 1];
+        }
+    }
+
+    std::cout << "User supplied ticker: " << (ticker ? ticker : "<none>") << ", and period: " << (period ? period : "<none>") << std::endl;
 
     // start python interpreter
     py::scoped_interpreter guard{};
@@ -25,7 +41,7 @@ int main()
     py::module_ fetcher = py::module_::import("price_fetcher");
 
     // call fetch_history function from yfinance python file
-    auto history = fetcher.attr("fetch_history")("ABB.AX", "1mo").cast<std::map<std::string, std::map<std::string, double>>>();
+    auto history = fetcher.attr("fetch_history")(ticker ? ticker : "ABB.AX", period ? period : "1mo").cast<std::map<std::string, std::map<std::string, double>>>();
 
     // (debug) print data
     // grab the Close‐price series (throws if there is no "Close" column)
