@@ -6,3 +6,6 @@
 	path = extern/pybind11
 	url = ../../pybind/pybind11
 	branch = stable
+[submodule "extern/drogon"]
+	path = extern/drogon
+	url = https://github.com/drogonframework/drogon.git
