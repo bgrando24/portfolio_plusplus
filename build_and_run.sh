@@ -1,22 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# (Optional) enable ccache for faster repeated builds
-export CC="ccache clang"
-export CXX="ccache clang++"
-
-# 1) Configure once (only if the build folder is missing or stale)
-if [ ! -f build/CMakeCache.txt ]; then
-  cmake -S . -B build \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -G Ninja
+# ─── Determine parallelism ─────────────────────────────────────────────────────
+if command -v nproc &> /dev/null; then
+  JOBS=$(nproc)
+elif [[ "$OSTYPE" == darwin* ]]; then
+  JOBS=$(sysctl -n hw.ncpu)
+else
+  JOBS=1
 fi
 
-# 2) build only what’s changed
-cmake --build build -- -j
+# ─── Prepare CMake arguments ───────────────────────────────────────────────────
+# start with the core bits
+cmake_args=(
+  -S . -B build
+  -DCMAKE_BUILD_TYPE=Debug
+  -G Ninja
+)
 
-# 3) run the binary
+# ─── Conditionally enable ccache launcher ─────────────────────────────────────
+if command -v ccache &> /dev/null; then
+  echo "→ ccache found, enabling compiler launcher"
+  cmake_args+=(
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  )
+else
+  echo "→ ccache not found, building without it"
+fi
+
+# ─── 1) Configure (only if never configured) ───────────────────────────────────
+if [ ! -f build/CMakeCache.txt ]; then
+  echo "→ Configuring project (fresh build)…"
+  cmake "${cmake_args[@]}"
+fi
+
+# ─── 2) Incremental build ─────────────────────────────────────────────────────
+echo "→ Building (using $JOBS cores)…"
+cmake --build build --parallel "$JOBS"
+
+# ─── 3) Run ────────────────────────────────────────────────────────────────────
+echo "→ Running…"
 ./build/portfolio_plusplus
+
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # # clean up old build and any caching

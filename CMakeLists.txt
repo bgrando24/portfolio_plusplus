@@ -18,7 +18,7 @@ set(PYBIND11_FINDPYTHON_EXECUTABLE
     "${CMAKE_SOURCE_DIR}/python/bin/python3"
     CACHE FILEPATH "" FORCE
 )
-add_subdirectory(deps/pybind11)
+add_subdirectory(extern/pybind11)
 
 add_subdirectory(extern/drogon)
 
