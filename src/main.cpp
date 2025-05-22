@@ -3,6 +3,7 @@
 #include <string>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
+#include <drogon/drogon.h>
 
 namespace py = pybind11;
 
@@ -54,6 +55,9 @@ int main(int argc, char *argv[])
     {
         std::cout << timestamp << " | " << price << "\n";
     }
+
+    drogon::app().addListener("0.0.0.0", 8080);
+    drogon::app().run();
 
     return 0;
 };

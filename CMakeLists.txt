@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(portfolio_plusplus)
 
+# set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# enforce real C++17, not GNU extensions
+set(CMAKE_CXX_EXTENSIONS OFF) 
+
 # include python headers
 include_directories(/Users/brandongrando/miniforge3/include/python3.9)
 
@@ -14,7 +20,16 @@ set(PYBIND11_FINDPYTHON_EXECUTABLE
 )
 add_subdirectory(deps/pybind11)
 
-add_executable(portfolio_plusplus src/main.cpp)
+add_subdirectory(extern/drogon)
+
+set(Drogon_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(Drogon_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+
+file(GLOB CONTROLLERS_SRC src/controllers/*.cpp)
+add_executable(portfolio_plusplus src/main.cpp ${CONTROLLERS_SRC})
 
 # Link pybind11 and python libraries
 target_link_libraries(portfolio_plusplus PRIVATE pybind11::embed)
+
+# Link it to drogon:
+target_link_libraries(portfolio_plusplus PRIVATE drogon)
