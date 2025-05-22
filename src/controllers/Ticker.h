@@ -2,13 +2,11 @@
 
 #include <drogon/HttpSimpleController.h>
 
-using namespace drogon;
-
 class Ticker : public drogon::HttpSimpleController<Ticker>
 {
 public:
-  void asyncHandleHttpRequest(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback) override;
+  void asyncHandleHttpRequest(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback) override;
   PATH_LIST_BEGIN
-  PATH_ADD("/", Get);
+  PATH_ADD("/ticker", drogon::Get);
   PATH_LIST_END
 };

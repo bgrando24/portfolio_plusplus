@@ -56,7 +56,8 @@ int main(int argc, char *argv[])
         std::cout << timestamp << " | " << price << "\n";
     }
 
-    drogon::app().addListener("0.0.0.0", 8080);
+    // drogon
+    drogon::app().loadConfigFile("drogon-config.json");
     drogon::app().run();
 
     return 0;
