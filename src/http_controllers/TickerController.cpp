@@ -5,38 +5,23 @@ using namespace drogon;
 
 void TickerController::getTickerData(const drogon::HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback, const std::string &symbol)
 {
-    // LOG_DEBUG << "GET /ticker/{" << symbol << "}";
-    // // retrieve ticker service plugin
-    // auto *ticker_service = drogon::app().getPlugin<TickerServicePlugin>();
-
-    // // grab the shared_ptr<TickerService>
-    // auto service = ticker_service->getService();
-
-    // // fetch the Ticker object from the service
-    // auto &ticker = service->getOrCreate(symbol);
-    // auto history = ticker.fetchPriceHistory("1mo");
-
-    // // return as JSON
-    // Json::Value json_response;
-    // json_response["symbol"] = symbol;
-    // json_response["history"] = Types::toJson(history);
-    // callback(drogon::HttpResponse::newHttpJsonResponse(json_response));
-
     LOG_DEBUG << "GET /ticker/{" << symbol << "}";
 
     try
     {
+        // fetch ticker service plugin, to fetch ticker object
         auto *plugin = drogon::app().getPlugin<TickerServicePlugin>();
-        auto service = plugin->getService();             // TickerService
-        auto &ticker_obj = service->getOrCreate(symbol); // Ticker
+        auto service = plugin->getService();
+        auto &ticker_obj = service->getOrCreate(symbol);
 
         LOG_DEBUG << "Controller: Calling fetchPriceHistory for " << symbol;
-        auto history = ticker_obj.fetchPriceHistory("1mo"); // Calls YFinanceProvider
+        auto history = ticker_obj.fetchPriceHistory("1mo"); // calls YFinanceProvider
         LOG_DEBUG << "Controller: fetchPriceHistory returned for " << symbol;
 
+        // build JSON response
         Json::Value json_response;
         json_response["symbol"] = symbol;
-        json_response["history"] = Types::toJson(history); // Assumes Types::toJson works with PriceHistory
+        json_response["history"] = Types::toJson(history);
 
         callback(drogon::HttpResponse::newHttpJsonResponse(json_response));
     }

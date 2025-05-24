@@ -11,7 +11,7 @@ public:
   void getTickerData(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback, const std::string &symbol);
 
   METHOD_LIST_BEGIN
-  // Register the HTTP GET method for fetching ticker data
+  // register the HTTP GET method for fetching ticker data
   ADD_METHOD_TO(TickerController::getTickerData, "/ticker/{1}", drogon::Get);
   METHOD_LIST_END
 };

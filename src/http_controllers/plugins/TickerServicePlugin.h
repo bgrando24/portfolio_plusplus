@@ -7,7 +7,7 @@
 class TickerServicePlugin : public drogon::Plugin<TickerServicePlugin>
 {
 public:
-    // Static method to set global provider
+    // static method to set global provider
     static void setGlobalProvider(std::shared_ptr<YFinanceProvider> provider)
     {
         _global_provider = provider;
@@ -27,7 +27,7 @@ public:
         LOG_INFO << "TickerServicePlugin initialized with global provider";
     }
 
-    // Called at shutdown
+    // called at shutdown
     void shutdown() override
     {
         _service.reset();

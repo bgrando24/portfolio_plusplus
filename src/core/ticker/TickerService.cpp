@@ -14,6 +14,7 @@ Ticker &TickerService::getOrCreate(const std::string &symbol)
     // ticker not found, create new instance and add to resigstry map
     if (ticker_iterator == _ticker_registry.end())
     {
+        LOG_DEBUG << "Ticker not found in registry, creating new Ticker instance for symbol: " << symbol;
         // Create and insert in one step, get iterator to inserted element
         auto [inserted_iterator, success] = _ticker_registry.emplace(
             symbol,
@@ -21,5 +22,6 @@ Ticker &TickerService::getOrCreate(const std::string &symbol)
         return *inserted_iterator->second;
     }
     // ticker already exists, return it
+    LOG_DEBUG << "Ticker found in registry for symbol: " << symbol;
     return *ticker_iterator->second;
 }

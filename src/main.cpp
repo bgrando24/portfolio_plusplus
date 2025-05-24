@@ -12,10 +12,10 @@ namespace py = pybind11;
 
 int main(int argc, char *argv[])
 {
-    char *ticker = nullptr;
-    char *period = nullptr;
-    // bool DEBUG = false;
-    bool DEBUG = true;
+    char *TICKER = nullptr;
+    char *PERIOD = nullptr;
+    bool DEBUG = false;
+    bool TEST_FETCH = false;
 
     // check for CLI flags
     if (argc > 1)
@@ -23,25 +23,26 @@ int main(int argc, char *argv[])
         for (int i = 1; i < argc; i++)
         {
             if (strcmp(argv[i], (char *)"--ticker") == 0)
-                ticker = argv[i + 1];
+                TICKER = argv[i + 1];
 
             if (strcmp(argv[i], (char *)"--period") == 0)
-                period = argv[i + 1];
+                PERIOD = argv[i + 1];
 
             if (strcmp(argv[i], (char *)"--debug") == 0)
                 DEBUG = true;
+
+            if (strcmp(argv[i], (char *)"--test-fetch") == 0)
+                TEST_FETCH = true;
         }
     }
 
-    std::cout << "User supplied ticker: " << (ticker ? ticker : "<none>") << ", and period: " << (period ? period : "<none>") << std::endl;
-
-    py::scoped_interpreter guard{}; // ensure Python is initialized and finalized correctly
-    PyEval_InitThreads();           // init Python's thread support - IMPORTANT.
+    py::scoped_interpreter guard{}; // ensure Python is initialised and finalised correctly
+    PyEval_InitThreads();           // IMPORTANT: init Python's thread support
 
     // create yf provider in main thread while we have GIL
     std::shared_ptr<YFinanceProvider> yf_provider;
 
-    PyThreadState *_save = nullptr; // Variable to store main thread's state
+    PyThreadState *_save = nullptr; // store main thread's state
 
     {
         py::gil_scoped_acquire acquire;
@@ -56,25 +57,34 @@ int main(int argc, char *argv[])
         yf_provider = std::make_shared<YFinanceProvider>();
         LOG_INFO << "Main: YFinanceProvider instance created.";
 
-        // Initial test fetch (optional but good)
-        LOG_INFO << "Main: Performing initial test fetch from main thread...";
-        auto history = yf_provider->fetchHistory(ticker ? ticker : "ABB.AX", period ? period : "1mo");
-        if (!history.empty())
+        if (TEST_FETCH)
         {
-            auto close_series = history.at("Close");
-            std::cout << "Initial fetch from main thread (Date | Close):\n"
-                      << "---------------------+-------\n";
-            for (auto const &[timestamp, price] : close_series)
+            // test fetch
+            std::cout << "TEST FETCH: User supplied ticker: "
+                      << (TICKER ? TICKER : "<none>")
+                      << ", and period: "
+                      << (PERIOD ? PERIOD : "<none>")
+                      << std::endl;
+
+            LOG_INFO << "Main: Performing initial test fetch from main thread...";
+            auto history = yf_provider->fetchHistory(TICKER ? TICKER : "ABB.AX", PERIOD ? PERIOD : "1mo");
+            if (!history.empty())
             {
-                std::cout << timestamp << " | " << price << "\n";
+                auto close_series = history.at("Close");
+                std::cout << "Initial fetch from main thread (Date | Close):\n"
+                          << "---------------------+-------\n";
+                for (auto const &[timestamp, price] : close_series)
+                {
+                    std::cout << timestamp << " | " << price << "\n";
+                }
             }
+            else
+            {
+                LOG_WARN << "Main: Initial fetch from main thread did not return data";
+            }
+            LOG_INFO << "Main: Initial Python setup and test fetch complete";
         }
-        else
-        {
-            LOG_WARN << "Main: Initial fetch from main thread did not return data.";
-        }
-        LOG_INFO << "Main: Initial Python setup and test fetch complete.";
-    } // GIL from py::gil_scoped_acquire is released here.
+    } // GIL from py::gil_scoped_acquire is released here
 
     // ~~~~~~~~~~~~~ Drogon HTTP Setup ~~~~~~~~~~~~~
     TickerServicePlugin::setGlobalProvider(yf_provider);
@@ -85,23 +95,22 @@ int main(int argc, char *argv[])
         std::cout << "Loading Drogon configuration..." << std::endl;
         drogon::app().setLogLevel(trantor::Logger::kTrace);
         std::cout << "Starting Drogon server on port 8080..." << std::endl;
-        std::cout << "Available routes should include /ticker" << std::endl;
     }
 
     // IMPORTANT: Release the GIL before starting Drogon's event loop
-    // This allows Drogon's worker threads to acquire it.
+    // this allows Drogon's worker threads to acquire it
     LOG_INFO << "Main: Releasing GIL before starting Drogon app loop.";
-    _save = PyEval_SaveThread(); // Main thread releases the GIL
+    _save = PyEval_SaveThread(); // main thread releases the GIL
 
-    drogon::app().run(); // Drogon application runs here. Main thread blocks.
+    drogon::app().run(); // Drogon application runs here - main thread blocks
 
-    // IMPORTANT: Re-acquire the GIL when Drogon app loop finishes, before Python is finalized.
+    // IMPORTANT: Re-acquire the GIL when Drogon app loop finishes, before Python is finalised
     LOG_INFO << "Main: Drogon app loop finished. Re-acquiring GIL.";
     if (_save)
     { // Ensure _save was set
         PyEval_RestoreThread(_save);
     }
-    // The py::scoped_interpreter (guard) destructor will also ensure GIL is acquired for finalization.
+    // The py::scoped_interpreter (guard) destructor will also ensure GIL is acquired for finalisation
 
     LOG_INFO << "Main: Application shutting down.";
     return 0;
