@@ -6,7 +6,7 @@
 
 Ticker::Ticker(char *symbol, YFinanceProvider &yf_provider) : _symbol(symbol), _yf_provider(yf_provider) {};
 
-Types::PriceHistory Ticker::fetchPriceHistory(const char *period = "1mo")
+Types::PriceHistory Ticker::fetchPriceHistory(const char *period)
 {
     // fetch the price history for this ticker
     this->_price_history = this->_yf_provider.fetchHistory(this->_symbol, period);

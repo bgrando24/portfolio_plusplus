@@ -26,8 +26,12 @@ add_subdirectory(extern/drogon)
 set(Drogon_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(Drogon_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 
-file(GLOB CONTROLLERS_SRC src/http_controllers/*.cpp)
-add_executable(portfolio_plusplus src/main.cpp ${CONTROLLERS_SRC})
+# Recursively find all .cpp files in src directory
+file(GLOB_RECURSE SRC src/**/*.cpp)
+
+add_executable(portfolio_plusplus src/main.cpp ${SRC})
+
+target_include_directories(portfolio_plusplus PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Link pybind11 and python libraries
 target_link_libraries(portfolio_plusplus PRIVATE pybind11::embed)

@@ -5,6 +5,7 @@
 #include <pybind11/stl.h>
 #include <drogon/drogon.h>
 #include "ext/YFinanceProvider.h"
+#include "core/ticker/TickerService.h"
 
 namespace py = pybind11;
 
@@ -58,8 +59,13 @@ int main(int argc, char *argv[])
         std::cout << timestamp << " | " << price << "\n";
     }
 
-    // drogon setup with debug info
+    // ~~~~~~~~~~~~~ Drogon HTTP Setup ~~~~~~~~~~~~~
+    // init ticker service
+    auto ticker_service = std::make_shared<TickerService>(yf_provider);
+
+    // drogon config file
     drogon::app().loadConfigFile("drogon-config.json");
+    // store ticker service in custom data
 
     if (DEBUG)
     {
