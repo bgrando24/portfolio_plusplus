@@ -14,7 +14,8 @@ int main(int argc, char *argv[])
 {
     char *ticker = nullptr;
     char *period = nullptr;
-    bool DEBUG = false;
+    // bool DEBUG = false;
+    bool DEBUG = true;
 
     // check for CLI flags
     if (argc > 1)
@@ -34,37 +35,49 @@ int main(int argc, char *argv[])
 
     std::cout << "User supplied ticker: " << (ticker ? ticker : "<none>") << ", and period: " << (period ? period : "<none>") << std::endl;
 
-    // start python interpreter
-    py::scoped_interpreter guard{};
+    py::scoped_interpreter guard{}; // ensure Python is initialized and finalized correctly
+    PyEval_InitThreads();           // init Python's thread support - IMPORTANT.
 
-    // enable venv packages
-    auto site = py::module_::import("site");
-    site.attr("addsitedir")("python/lib/python3.9/site-packages");
+    // create yf provider in main thread while we have GIL
+    std::shared_ptr<YFinanceProvider> yf_provider;
 
-    // tell interpreter where to look
-    py::module_ sys = py::module_::import("sys");
-    sys.attr("path").attr("insert")(0, "python/src");
+    PyThreadState *_save = nullptr; // Variable to store main thread's state
 
-    // init YFinanceProvider and fetch ticker history
-    YFinanceProvider yf_provider;
-    auto history = yf_provider.fetchHistory(ticker ? ticker : "ABB.AX", period ? period : "1mo");
-    // grab the Close‐price series (throws if there is no "Close" column)
-    auto close_series = history.at("Close");
-
-    // print the ticker price data
-    std::cout << "Date                 | Close\n"
-              << "---------------------+-------\n";
-
-    for (auto const &[timestamp, price] : close_series)
     {
-        std::cout << timestamp << " | " << price << "\n";
-    }
+        py::gil_scoped_acquire acquire;
+
+        auto site = py::module_::import("site");
+        site.attr("addsitedir")("python/lib/python3.9/site-packages");
+
+        py::module_ sys = py::module_::import("sys");
+        sys.attr("path").attr("insert")(0, "python/src");
+
+        LOG_INFO << "Main: Creating YFinanceProvider instance...";
+        yf_provider = std::make_shared<YFinanceProvider>();
+        LOG_INFO << "Main: YFinanceProvider instance created.";
+
+        // Initial test fetch (optional but good)
+        LOG_INFO << "Main: Performing initial test fetch from main thread...";
+        auto history = yf_provider->fetchHistory(ticker ? ticker : "ABB.AX", period ? period : "1mo");
+        if (!history.empty())
+        {
+            auto close_series = history.at("Close");
+            std::cout << "Initial fetch from main thread (Date | Close):\n"
+                      << "---------------------+-------\n";
+            for (auto const &[timestamp, price] : close_series)
+            {
+                std::cout << timestamp << " | " << price << "\n";
+            }
+        }
+        else
+        {
+            LOG_WARN << "Main: Initial fetch from main thread did not return data.";
+        }
+        LOG_INFO << "Main: Initial Python setup and test fetch complete.";
+    } // GIL from py::gil_scoped_acquire is released here.
 
     // ~~~~~~~~~~~~~ Drogon HTTP Setup ~~~~~~~~~~~~~
-    // init ticker service
-    auto ticker_service = std::make_shared<TickerService>(yf_provider);
-
-    // drogon config file
+    TickerServicePlugin::setGlobalProvider(yf_provider);
     drogon::app().loadConfigFile("drogon-config.json");
 
     if (DEBUG)
@@ -75,6 +88,21 @@ int main(int argc, char *argv[])
         std::cout << "Available routes should include /ticker" << std::endl;
     }
 
-    drogon::app().run();
+    // IMPORTANT: Release the GIL before starting Drogon's event loop
+    // This allows Drogon's worker threads to acquire it.
+    LOG_INFO << "Main: Releasing GIL before starting Drogon app loop.";
+    _save = PyEval_SaveThread(); // Main thread releases the GIL
+
+    drogon::app().run(); // Drogon application runs here. Main thread blocks.
+
+    // IMPORTANT: Re-acquire the GIL when Drogon app loop finishes, before Python is finalized.
+    LOG_INFO << "Main: Drogon app loop finished. Re-acquiring GIL.";
+    if (_save)
+    { // Ensure _save was set
+        PyEval_RestoreThread(_save);
+    }
+    // The py::scoped_interpreter (guard) destructor will also ensure GIL is acquired for finalization.
+
+    LOG_INFO << "Main: Application shutting down.";
     return 0;
 };

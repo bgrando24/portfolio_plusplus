@@ -15,6 +15,10 @@ yfinance: https://github.com/ranaroussi/yfinance
 
 ### pybind submodule - allows running python in c++
 pybind (as git submodule): https://pybind11.readthedocs.io/en/latest/installing.html
+```
+git submodule add -b stable ../../pybind/pybind11 extern/pybind11
+git submodule update --init
+```
 
 ### Drogon - C++ HTTP server framework
 drogon add as submodule:

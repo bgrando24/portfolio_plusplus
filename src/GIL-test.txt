@@ -1,0 +1,168 @@
+#include <iostream>
+#include <thread>
+#include <future>
+#include <sstream>
+#include <string>
+#include <map>
+
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+// Helper to convert thread::id to string
+inline std::string thread_id_to_string_main(const std::thread::id &id)
+{
+    std::stringstream ss;
+    ss << id;
+    return ss.str();
+}
+
+// This function runs in the new thread and returns C++ types
+std::map<std::string, std::string> python_task_in_new_thread_cpp_types(py::module_ &fetcher_module, const std::string &ticker_val)
+{
+    std::string new_thread_id_str = thread_id_to_string_main(std::this_thread::get_id());
+    std::cout << "[" << new_thread_id_str << "] New thread: Entered python_task_in_new_thread_cpp_types." << std::endl;
+
+    PyGILState_STATE gstate;
+    std::cout << "[" << new_thread_id_str << "] New thread: Attempting PyGILState_Ensure()." << std::endl;
+    gstate = PyGILState_Ensure();
+    std::cout << "[" << new_thread_id_str << "] New thread: PyGILState_Ensure() completed." << std::endl;
+
+    std::map<std::string, std::string> cpp_result_map;
+    try
+    {
+        std::cout << "[" << new_thread_id_str << "] New thread: Calling Python 'fetch_history'..." << std::endl;
+        py::object result_obj = fetcher_module.attr("fetch_history")(ticker_val, "1d_simple");
+        std::cout << "[" << new_thread_id_str << "] New thread: Python 'fetch_history' call returned." << std::endl;
+
+        if (py::isinstance<py::dict>(result_obj))
+        {
+            py::dict py_dict = result_obj.cast<py::dict>();
+            for (auto item : py_dict)
+            {
+                cpp_result_map[item.first.cast<std::string>()] = item.second.cast<std::string>();
+            }
+            std::cout << "[" << new_thread_id_str << "] New thread: Converted Python dict to C++ map." << std::endl;
+        }
+        else
+        {
+            std::cout << "[" << new_thread_id_str << "] New thread: Python function did not return a dict." << std::endl;
+        }
+        // py::object result_obj and py::dict py_dict (if created) go out of scope here.
+        // Their destructors (dec_ref) are called while this thread holds the GIL, which is safe.
+    }
+    catch (const py::error_already_set &e)
+    {
+        std::cerr << "[" << new_thread_id_str << "] New thread: Python exception: " << e.what() << std::endl;
+        if (PyErr_Occurred())
+            PyErr_Print();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[" << new_thread_id_str << "] New thread: C++ exception: " << e.what() << std::endl;
+    }
+
+    std::cout << "[" << new_thread_id_str << "] New thread: Releasing GIL." << std::endl;
+    PyGILState_Release(gstate);
+    std::cout << "[" << new_thread_id_str << "] New thread: GIL released. Exiting." << std::endl;
+    return cpp_result_map; // Return pure C++ map
+}
+
+int main(int argc, char *argv[])
+{
+    std::string main_thread_id_str = thread_id_to_string_main(std::this_thread::get_id());
+    std::cout << "[" << main_thread_id_str << "] Main thread: Starting test with std::async." << std::endl;
+
+    py::scoped_interpreter guard{};
+    std::cout << "[" << main_thread_id_str << "] Main thread: py::scoped_interpreter guard acquired." << std::endl;
+
+    PyEval_InitThreads();
+    std::cout << "[" << main_thread_id_str << "] Main thread: PyEval_InitThreads() called." << std::endl;
+
+    py::module_ price_fetcher_module;
+    try
+    {
+        py::gil_scoped_acquire acquire_main;
+        std::cout << "[" << main_thread_id_str << "] Main thread: Acquired GIL for imports." << std::endl;
+
+        py::module_ sys = py::module_::import("sys");
+        sys.attr("path").attr("insert")(0, "python/src");
+        std::cout << "[" << main_thread_id_str << "] Main thread: Added 'python/src' to sys.path." << std::endl;
+
+        price_fetcher_module = py::module_::import("price_fetcher");
+        std::cout << "[" << main_thread_id_str << "] Main thread: 'price_fetcher' module imported." << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[" << main_thread_id_str << "] Main thread: Failed to import price_fetcher: " << e.what() << std::endl;
+        if (PyErr_Occurred())
+            PyErr_Print();
+        return 1;
+    }
+
+    if (PyGILState_Check())
+    {
+        std::cout << "[" << main_thread_id_str << "] Main thread: GIL IS HELD before explicit release (UNEXPECTED!)." << std::endl;
+    }
+    else
+    {
+        std::cout << "[" << main_thread_id_str << "] Main thread: GIL IS NOT HELD before explicit release (as expected)." << std::endl;
+    }
+
+    std::map<std::string, std::string> result_cpp_map; // To store the C++ map
+
+    {
+        py::gil_scoped_release release_gil_for_async;
+        std::cout << "[" << main_thread_id_str << "] Main thread: GIL explicitly released via py::gil_scoped_release." << std::endl;
+
+        if (PyGILState_Check())
+        {
+            std::cout << "[" << main_thread_id_str << "] Main thread: GIL IS STILL HELD after py::gil_scoped_release (PROBLEM!)." << std::endl;
+        }
+        else
+        {
+            std::cout << "[" << main_thread_id_str << "] Main thread: GIL IS NOT HELD after py::gil_scoped_release (Good)." << std::endl;
+        }
+
+        std::cout << "[" << main_thread_id_str << "] Main thread: Launching std::async task..." << std::endl;
+        std::future<std::map<std::string, std::string>> future_result = // Expecting C++ map
+            std::async(std::launch::async, python_task_in_new_thread_cpp_types, std::ref(price_fetcher_module), "TEST.TICKER");
+
+        std::cout << "[" << main_thread_id_str << "] Main thread: Waiting for std::async task result..." << std::endl;
+
+        try
+        {
+            result_cpp_map = future_result.get(); // Get the C++ map. No py::objects here.
+            std::cout << "[" << main_thread_id_str << "] Main thread: std::async task completed." << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "[" << main_thread_id_str << "] Main thread: Exception waiting for future: " << e.what() << std::endl;
+        }
+    }
+
+    if (PyGILState_Check())
+    {
+        std::cout << "[" << main_thread_id_str << "] Main thread: GIL re-acquired by main thread after async task (Good)." << std::endl;
+        if (!result_cpp_map.empty())
+        {
+            std::cout << "[" << main_thread_id_str << "] Main thread: Result from new thread:" << std::endl;
+            for (const auto &pair : result_cpp_map)
+            {
+                std::cout << "  " << pair.first << ": " << pair.second << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "[" << main_thread_id_str << "] Main thread: No data returned from new thread or an error occurred in new thread." << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "[" << main_thread_id_str << "] Main thread: GIL NOT re-acquired by main thread after async task (Potential issue for interpreter shutdown)." << std::endl;
+    }
+
+    std::cout << "[" << main_thread_id_str << "] Main thread: Test finished." << std::endl;
+    return 0;
+}

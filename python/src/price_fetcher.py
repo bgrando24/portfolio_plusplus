@@ -7,4 +7,4 @@ def fetch_history(ticker: str, period: str = "1mo"):
     # convert to dict of dict
     return df.to_dict()
 
-# print(fetch_history("ABB.AX"))
+# # print(fetch_history("ABB.AX"))
