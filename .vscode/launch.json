@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
          {
-            "name": "Debug portfolio_plusplus",
+            "name": "(Ubuntu) Debug portfolio_plusplus",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/portfolio_plusplus",
