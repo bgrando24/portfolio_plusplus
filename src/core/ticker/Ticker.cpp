@@ -4,7 +4,11 @@
 #include "Ticker.h"
 #include "../../util/Types.h"
 
-Ticker::Ticker(char *symbol) : _symbol(symbol)
+Ticker::Ticker(char *symbol, YFinanceProvider &yf_provider) : _symbol(symbol), _yf_provider(yf_provider) {};
+
+Types::PriceHistory Ticker::fetchPriceHistory(const char *period = "1mo")
 {
-    this->_symbol = symbol;
-};
+    // fetch the price history for this ticker
+    this->_price_history = this->_yf_provider.fetchHistory(this->_symbol, period);
+    return this->_price_history;
+}

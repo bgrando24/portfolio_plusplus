@@ -2,17 +2,23 @@
 #define TICKER_H
 
 #include "../../util/Types.h"
+#include "../../ext/YFinanceProvider.h"
 
 class Ticker
 {
 private:
+    // ticker symbol
     char *_symbol;
+    // yfinance provider dependecy injection
+    YFinanceProvider &_yf_provider;
+    // historical price data state
+    Types::PriceHistory _price_history;
 
 public:
     /**
      * @param symbol The ticker symbol for the stock (e.g., "AAPL" for Apple Inc.)
      */
-    Ticker(char *symbol);
+    Ticker(char *symbol, YFinanceProvider &yf_provider);
 
     /**
      * Fetches the historical price data for this ticker

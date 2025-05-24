@@ -1,5 +1,6 @@
 /**
  * Provider class to enable usage of the yfinance Python module, via the pybind 11 library
+ * This class should only be instantiated once, with dependency injection used to provide it to other classes
  */
 #ifndef YFINANCEPROVIDER_H
 #define YFINANCEPROVIDER_H

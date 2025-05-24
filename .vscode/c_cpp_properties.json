@@ -7,7 +7,8 @@
                 "/usr/include/python3.10",
                 "${workspaceFolder}/extern/drogon/lib/inc",
                 "/usr/include/jsoncpp",
-                "/Users/brandongrando/miniforge3/include/python3.9"
+                "/Users/brandongrando/miniforge3/include/python3.9",
+                "${workspaceFolder}/extern/pybind11/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
