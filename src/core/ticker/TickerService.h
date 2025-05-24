@@ -29,6 +29,6 @@ public:
      * @param symbol The ticker symbol
      * @return A reference to the Ticker instance associated with the given symbol
      */
-    Ticker &getOrCreate(std::string &symbol);
+    Ticker &getOrCreate(const std::string &symbol);
 };
 #endif

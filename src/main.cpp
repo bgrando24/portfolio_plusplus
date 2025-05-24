@@ -6,6 +6,7 @@
 #include <drogon/drogon.h>
 #include "ext/YFinanceProvider.h"
 #include "core/ticker/TickerService.h"
+#include "http_controllers/plugins/TickerServicePlugin.h"
 
 namespace py = pybind11;
 
@@ -65,7 +66,6 @@ int main(int argc, char *argv[])
 
     // drogon config file
     drogon::app().loadConfigFile("drogon-config.json");
-    // store ticker service in custom data
 
     if (DEBUG)
     {

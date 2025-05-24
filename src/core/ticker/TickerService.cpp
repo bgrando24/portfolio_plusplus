@@ -4,7 +4,7 @@
 
 TickerService::TickerService(YFinanceProvider &yf_provider) : _yf_provider(yf_provider) {};
 
-Ticker &TickerService::getOrCreate(std::string &symbol)
+Ticker &TickerService::getOrCreate(const std::string &symbol)
 {
     // .find() returns an iterator to the element if found, or end() if not found
     auto ticker_iterator = _ticker_registry.find(symbol);
