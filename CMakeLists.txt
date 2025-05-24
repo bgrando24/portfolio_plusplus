@@ -26,7 +26,7 @@ add_subdirectory(extern/drogon)
 set(Drogon_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(Drogon_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 
-file(GLOB CONTROLLERS_SRC src/controllers/*.cpp)
+file(GLOB CONTROLLERS_SRC src/http_controllers/*.cpp)
 add_executable(portfolio_plusplus src/main.cpp ${CONTROLLERS_SRC})
 
 # Link pybind11 and python libraries
