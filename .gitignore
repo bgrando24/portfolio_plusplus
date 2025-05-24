@@ -3,3 +3,5 @@
 /python/lib
 /python/src/__pycache__
 !.vscode/c_cpp_properties.json
+/uploads
+/extern
