@@ -56,9 +56,16 @@ int main(int argc, char *argv[])
         std::cout << timestamp << " | " << price << "\n";
     }
 
-    // drogon
+    // drogon setup with debug info
+    std::cout << "Loading Drogon configuration..." << std::endl;
     drogon::app().loadConfigFile("drogon-config.json");
+    
+    // Add some debug logging
+    drogon::app().setLogLevel(trantor::Logger::kTrace);
+    
+    std::cout << "Starting Drogon server on port 8080..." << std::endl;
+    std::cout << "Available routes should include /ticker" << std::endl;
+    
     drogon::app().run();
-
     return 0;
 };
