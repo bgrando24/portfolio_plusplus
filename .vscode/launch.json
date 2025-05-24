@@ -3,5 +3,25 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+         {
+            "name": "Debug portfolio_plusplus",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/portfolio_plusplus",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                // If you need to set PYTHONPATH or LD_LIBRARY_PATH, do it here
+                // { "name": "PYTHONPATH", "value": "${workspaceFolder}/python/src" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                { "description": "Enable pretty-printing for gdb", "text": "-enable-pretty-printing", "ignoreFailures": true }
+            ]
+        }
+    ]
 }
