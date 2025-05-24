@@ -39,9 +39,9 @@ fi
 echo "→ Building (using $JOBS cores)…"
 cmake --build build --parallel "$JOBS"
 
-# ─── 3) Run ────────────────────────────────────────────────────────────────────
+# ─── 3) Run with debug flag ────────────────────────────────────────────────────
 echo "→ Running…"
-./build/portfolio_plusplus
+./build/portfolio_plusplus --debug
 
 
 

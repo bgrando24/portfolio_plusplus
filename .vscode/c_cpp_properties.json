@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "/usr/include/python3.10",
                 "${workspaceFolder}/extern/drogon/lib/inc",
-                "/usr/include/jsoncpp"
+                "/usr/include/jsoncpp",
+                "/Users/brandongrando/miniforge3/include/python3.9"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
@@ -20,7 +21,8 @@
                 "${workspaceFolder}/**",
                 "/opt/homebrew/include/python3.12",
                 "${workspaceFolder}/extern/drogon/lib/inc",
-                "/opt/homebrew/include"
+                "/opt/homebrew/include",
+                "/Users/brandongrando/miniforge3/include/python3.9"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
