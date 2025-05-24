@@ -1,8 +1,9 @@
 #include "Ticker.h"
-#include <drogon/drogon.h>
 #include <drogon/HttpResponse.h>
 
-void Ticker::asyncHandleHttpRequest(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback)
+using namespace drogon;
+
+void Ticker::asyncHandleHttpRequest(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback)
 {
     auto resp = HttpResponse::newHttpResponse();
     resp->setBody("Hello from Ticker!");

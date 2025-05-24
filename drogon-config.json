@@ -5,12 +5,5 @@
   "log": {
     "logLevel": "TRACE",
     "logToStderr": true
-  },
-  "simpleControllersMap": [
-    {
-      "path": "/ticker",
-      "controller": "Ticker",
-      "httpMethods": [ "get" ]
-    }
-  ]
+  }
 }
