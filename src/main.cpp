@@ -37,7 +37,6 @@ int main(int argc, char *argv[])
     }
 
     py::scoped_interpreter guard{}; // ensure Python is initialised and finalised correctly
-    PyEval_InitThreads();           // IMPORTANT: init Python's thread support
 
     // create yf provider in main thread while we have GIL
     std::shared_ptr<YFinanceProvider> yf_provider;
