@@ -6,9 +6,6 @@
     "logLevel": "TRACE",
     "logToStderr": true
   },
-  "app": {
-    "threads_num": 1
-  },
   "plugins": [
     {
       "name": "TickerServicePlugin"
